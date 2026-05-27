@@ -23,10 +23,11 @@ class EventBus:
         self._queue: asyncio.Queue = asyncio.Queue()
         self._handlers: dict[str, list[Handler]] = {}
         self._running = False
+        self._consumer_task = None
 
     async def start(self):
         self._running = True
-        asyncio.create_task(self._consume())
+        self._consumer_task = asyncio.create_task(self._consume())
         logger.info("EventBus started (asyncio.Queue)")
 
     async def stop(self):

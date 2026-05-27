@@ -29,7 +29,7 @@ _load_dotenv()
 # ── DeepSeek ──
 DEEPSEEK_API_KEY = os.environ["DEEPSEEK_API_KEY"]
 DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-reasoner")  # DeepSeek V4 主力模型
 
 # ── Database ──
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+asyncpg://ots_user:ots2026@localhost:5432/ots")

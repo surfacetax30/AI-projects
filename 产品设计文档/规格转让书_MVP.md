@@ -468,7 +468,7 @@ DATABASE_URL=postgresql+asyncpg://ots_user:ots2026@localhost:5432/ots
 # ── DeepSeek (LLM) ──
 DEEPSEEK_API_KEY=sk-your-api-key-here
 DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-reasoner  # DeepSeek V4
 
 # ── MinIO (Object Storage) ──
 MINIO_ENDPOINT=localhost:9000

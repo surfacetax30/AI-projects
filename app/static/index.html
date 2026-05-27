@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTS-AHA · 零部件认可智能助手</title>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111620;
+    --surface-raised: #161c28;
+    --border: #1e2a3c;
+    --border-active: #2a4060;
+    --text: #c8d0dc;
+    --text-dim: #6b7394;
+    --text-bright: #e8ecf4;
+    --cyan: #00e5ff;
+    --cyan-dim: rgba(0,229,255,.12);
+    --cyan-glow: rgba(0,229,255,.25);
+    --amber: #ffab00;
+    --amber-dim: rgba(255,171,0,.12);
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,.12);
+    --red: #ff5252;
+    --red-dim: rgba(255,82,82,.12);
+    --blue: #448aff;
+    --radius: 6px;
+    --radius-lg: 10px;
+    --font-mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
+    --font-sans: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(rgba(0,229,255,.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text-bright);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  button:hover { border-color: var(--border-active); background: #1c2338; }
+  button.primary {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  button.primary:hover { background: var(--cyan-glow); }
+  button.amber {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+    font-weight: 600;
+  }
+  button.danger {
+    background: var(--red-dim);
+    border-color: var(--red);
+    color: var(--red);
+  }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  button:disabled { opacity: .35; pointer-events: none; }
+
+  input, textarea, select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    width: 100%;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 10;
+  }
+  .sidebar-header {
+    padding: 0 16px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .sidebar-header .logo {
+    font-size: 16px; font-weight: 700; color: var(--cyan);
+    letter-spacing: -.3px;
+  }
+  .sidebar-header .sub {
+    font-size: 11px; color: var(--text-dim);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    color: var(--text-dim);
+    font-size: 13px;
+    border: none; background: none;
+    cursor: pointer; width: 100%; text-align: left;
+    transition: all .15s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text-bright); background: var(--surface-raised); }
+  .nav-item.active { color: var(--cyan); border-left-color: var(--cyan); background: var(--cyan-dim); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* Main */
+  .main { margin-left: 220px; flex: 1; padding: 24px 32px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .card-title { font-size: 15px; font-weight: 600; color: var(--text-bright); }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+
+  /* Stat cards */
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    transition: border-color .15s;
+  }
+  .stat-card:hover { border-color: var(--border-active); }
+  .stat-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card .value {
+    font-size: 28px; font-weight: 700; color: var(--text-bright);
+    font-family: var(--font-mono); margin-top: 4px;
+  }
+  .stat-card.cyan .value { color: var(--cyan); }
+  .stat-card.amber .value { color: var(--amber); }
+  .stat-card.green .value { color: var(--green); }
+  .stat-card.red .value { color: var(--red); }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  .form-hint { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+    color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    font-weight: 600;
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--surface-raised); }
+
+  /* Badge */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; letter-spacing: .3px;
+    font-family: var(--font-mono);
+  }
+  .badge-cyan { background: var(--cyan-dim); color: var(--cyan); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-blue { background: rgba(68,138,255,.12); color: var(--blue); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 7px; top: 4px; bottom: 4px;
+    width: 1px; background: var(--border);
+  }
+  .tl-item { position: relative; padding: 8px 0; }
+  .tl-item::before {
+    content: '';
+    position: absolute; left: -21px; top: 14px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--cyan); border: 2px solid var(--surface);
+  }
+  .tl-item .tl-time {
+    font-size: 11px; color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+  .tl-item .tl-event {
+    font-size: 13px; color: var(--text-bright);
+    font-family: var(--font-mono);
+  }
+
+  /* Toast */
+  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 12px 20px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500;
+    animation: slideIn .2s ease;
+    max-width: 380px;
+  }
+  .toast-success { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
+  .toast-error { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
+  .toast-info { background: var(--cyan-dim); border: 1px solid var(--cyan); color: var(--cyan); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* Loading */
+  .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    z-index: 100; display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px;
+    max-width: 640px; width: 90%; max-height: 80vh; overflow-y: auto;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text-bright); }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--cyan); background: var(--cyan-dim); }
+
+  /* Report list */
+  .report-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; background: var(--surface-raised);
+    border-radius: var(--radius); margin-top: 8px;
+  }
+  .report-item .name { font-family: var(--font-mono); font-size: 12px; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-dim); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+  .empty-state p { font-size: 14px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { width: 60px; }
+    .sidebar .nav-item span { display: none; }
+    .sidebar-header .sub { display: none; }
+    .main { margin-left: 60px; padding: 16px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="toast-container" id="toasts"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">OTS-AHA</div>
+      <div class="sub">零部件认可智能助手</div>
+      <div class="sub" id="sys-status" style="color:var(--green)">● 系统就绪</div>
+    </div>
+    <button class="nav-item active" data-page="dashboard"><span class="icon">◫</span><span>仪表盘</span></button>
+    <button class="nav-item" data-page="parts"><span class="icon">⊞</span><span>零件管理</span></button>
+    <button class="nav-item" data-page="tasks"><span class="icon">⊟</span><span>任务追踪</span></button>
+    <button class="nav-item" data-page="upload"><span class="icon">↥</span><span>报告上传</span></button>
+    <button class="nav-item" data-page="webhook"><span class="icon">✉</span><span>邮件模拟</span></button>
+  </aside>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <section class="page active" id="page-dashboard">
+      <div class="card-header" style="margin-bottom:20px"><h2 class="card-title">系统概览</h2></div>
+      <div class="grid-3" id="dashboard-stats">
+        <div class="stat-card cyan"><div class="label">零件总数</div><div class="value" id="stat-parts">—</div></div>
+        <div class="stat-card amber"><div class="label">活跃任务</div><div class="value" id="stat-tasks">—</div></div>
+        <div class="stat-card green"><div class="label">已完成</div><div class="value" id="stat-closed">—</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><span class="card-title">系统端点</span></div>
+        <table>
+          <thead><tr><th>方法</th><th>路径</th><th>功能</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-green">POST</span></td><td style="font-family:var(--font-mono)">/api/parts</td><td>创建零件 + 自动创建任务</td></tr>
+            <tr><td><span class="badge badge-blue">GET</span></td><td style="font-family:var(--font-mono)">/api/parts</td><td>零件列表</td></tr>
+            <tr><td><span class="badge badge-blue">GET</span></td><td style="font-family:var(--font-mono)">/api/parts/:id</td><td>零件详情 + 关联任务</td></tr>
+            <tr><td><span class="badge badge-blue">GET</span></td><td style="font-family:var(--font-mono)">/api/tasks/:id</td><td>任务详情 + 时间线</td></tr>
+            <tr><td><span class="badge badge-green">POST</span></td><td style="font-family:var(--font-mono)">/api/tasks/:id/reports</td><td>上传测试报告</td></tr>
+            <tr><td><span class="badge badge-green">POST</span></td><td style="font-family:var(--font-mono)">/api/webhooks/mail</td><td>模拟邮件到达</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Parts -->
+    <section class="page" id="page-parts">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">创建新零件</span></div>
+          <div class="form-group"><label class="form-label">零件号</label><input id="part-no" placeholder="OTS-2026-001"></div>
+          <div class="form-group"><label class="form-label">零件名称</label><input id="part-name" placeholder="前副车架焊接总成"></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">零件类型</label><select id="part-type"><option>金属支架</option><option>域控制器</option><option>电子零件</option><option>塑料件</option></select></div>
+            <div class="form-group"><label class="form-label">项目编号</label><input id="project-code" placeholder="P2026-SUV"></div>
+          </div>
+          <div class="form-group"><label class="form-label">供应商</label><input id="supplier" placeholder="XX精工制造有限公司"></div>
+          <button class="primary" onclick="createPart()" style="width:100%">创建零件并生成任务</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">零件列表</span>
+            <button class="small" onclick="loadParts()">刷新</button>
+          </div>
+          <div id="parts-list"><div class="empty-state"><div class="icon">⊞</div><p>点击刷新加载零件</p></div></div>
+        </div>
+      </div>
+      <div id="part-detail" class="card" style="display:none; margin-top:16px"></div>
+    </section>
+
+    <!-- Tasks -->
+    <section class="page" id="page-tasks">
+      <div class="card">
+        <div class="card-header"><span class="card-title">任务查询</span></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">任务 ID</label><input id="task-id-search" placeholder="输入任务 ID..."></div>
+          <div class="form-group" style="display:flex;align-items:flex-end"><button class="primary" onclick="loadTaskDetail()" style="width:100%">查询任务</button></div>
+        </div>
+      </div>
+      <div id="task-detail" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">任务信息</span></div>
+          <div id="task-info"></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">零件信息</span></div>
+            <div id="task-part-info"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">时间线</span></div>
+            <div id="task-timeline"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">已解析报告</span></div>
+          <div id="task-reports"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload -->
+    <section class="page" id="page-upload">
+      <div class="card">
+        <div class="card-header"><span class="card-title">上传测试报告</span></div>
+        <div class="form-group"><label class="form-label">目标任务 ID</label><input id="upload-task-id" placeholder="输入任务 ID..."></div>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <div style="font-size:32px;opacity:.5;margin-bottom:8px">↥</div>
+          <div style="font-size:14px;color:var(--text-dim)">拖拽文件到此处或点击选择</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">支持 PDF / DOCX / XLSX / CSV</div>
+        </div>
+        <input type="file" id="file-input" style="display:none" onchange="onFileSelected(event)">
+        <div id="upload-file-name" style="margin-top:12px;font-family:var(--font-mono);font-size:13px;color:var(--cyan)"></div>
+        <button class="primary" onclick="uploadReport()" id="upload-btn" disabled style="margin-top:12px;width:100%">上传报告</button>
+      </div>
+    </section>
+
+    <!-- Webhook -->
+    <section class="page" id="page-webhook">
+      <div class="card">
+        <div class="card-header"><span class="card-title">模拟邮件到达</span></div>
+        <div class="form-group"><label class="form-label">发件人</label>
+          <select id="mail-from">
+            <option>vendor1@example.com</option>
+            <option>vendor2@supplier.cn</option>
+            <option>lab@testing.org</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">邮件主题</label><input id="mail-subject" placeholder="OTS-2026-001 OTS认可测试报告"></div>
+        <div class="form-group"><label class="form-label">零件号</label><input id="mail-part-no" placeholder="OTS-2026-001"></div>
+        <div class="form-group"><label class="form-label">附件路径（可选，逗号分隔）</label><input id="mail-attachments" placeholder="ots-reports/task001/report.pdf"></div>
+        <button class="primary" onclick="sendWebhook()" style="width:100%">发送模拟邮件</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const API = '/api';
+
+// Toast
+function toast(msg, type='info') {
+  const c = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast toast-'+type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity=0; setTimeout(()=>el.remove(),200); }, 3000);
+}
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const page = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    if (page==='dashboard') loadStats();
+    if (page==='parts') loadParts();
+  });
+});
+
+// Dashboard stats
+async function loadStats() {
+  try {
+    const [parts,tasks] = await Promise.all([
+      fetch(API+'/parts').then(r=>r.json()),
+      fetch(API+'/parts').then(async r => {
+        const parts = await r.json();
+        let taskCount=0, closedCount=0;
+        for (const p of parts) {
+          const detailRes = await fetch(API+'/parts/'+p.id).then(r=>r.json());
+          const tasks = detailRes.tasks || [];
+          taskCount += tasks.length;
+          closedCount += tasks.filter(t=>t.state==='CLOSED').length;
+        }
+        return {taskCount, closedCount};
+      })
+    ]);
+    document.getElementById('stat-parts').textContent = Array.isArray(parts)?parts.length:0;
+    document.getElementById('stat-tasks').textContent = tasks.taskCount;
+    document.getElementById('stat-closed').textContent = tasks.closedCount;
+  } catch(e) {
+    document.getElementById('stat-parts').textContent = '—';
+  }
+}
+
+// Parts
+async function createPart() {
+  const body = {
+    part_no: document.getElementById('part-no').value.trim(),
+    part_name: document.getElementById('part-name').value.trim(),
+    part_type: document.getElementById('part-type').value,
+    supplier: document.getElementById('supplier').value.trim(),
+    project_code: document.getElementById('project-code').value.trim(),
+  };
+  if (!body.part_no || !body.part_name) { toast('请填写零件号和名称','error'); return; }
+  try {
+    const res = await fetch(API+'/parts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if (!res.ok) { const e=await res.json(); toast(e.detail||'创建失败','error'); return; }
+    const data = await res.json();
+    toast('创建成功 · 零件 '+data.part.id+' · 任务 '+data.task.id,'success');
+    document.getElementById('part-no').value='';
+    document.getElementById('part-name').value='';
+    document.getElementById('supplier').value='';
+    loadParts();
+  } catch(e) { toast('请求失败','error'); }
+}
+
+async function loadParts() {
+  try {
+    const res = await fetch(API+'/parts');
+    const parts = await res.json();
+    const el = document.getElementById('parts-list');
+    if (!parts.length) { el.innerHTML='<div class="empty-state"><div class="icon">⊞</div><p>暂无零件，创建第一个吧</p></div>'; return; }
+    el.innerHTML = '<table><thead><tr><th>零件号</th><th>名称</th><th>类型</th><th>供应商</th><th>操作</th></tr></thead><tbody>'+
+      parts.map(p=>'<tr><td style="font-family:var(--font-mono)">'+p.part_no+'</td><td>'+p.part_name+'</td><td><span class="badge badge-blue">'+p.part_type+'</span></td><td>'+p.supplier+'</td><td><button class="small" onclick="loadPartDetail(\''+p.id+'\')">详情</button></td></tr>').join('')+
+      '</tbody></table>';
+  } catch(e) { toast('加载失败','error'); }
+}
+
+async function loadPartDetail(partId) {
+  try {
+    const res = await fetch(API+'/parts/'+partId);
+    const data = await res.json();
+    const el = document.getElementById('part-detail');
+    const tasksHtml = (data.tasks||[]).map(t=>'<div class="report-item"><span style="font-family:var(--font-mono)">任务 '+t.id+'</span><span class="badge badge-'+(t.state==='CLOSED'?'green':t.state==='CREATED'?'cyan':'amber')+'">'+t.state+'</span></div>').join('');
+    el.style.display='block';
+    el.innerHTML = '<div class="card-header"><span class="card-title">零件详情 · '+data.part_no+'</span><button class="small" onclick="document.getElementById(\'part-detail\').style.display=\'none\'">关闭</button></div>'+
+      '<div class="grid-2"><div><table><tr><td style="color:var(--text-dim)">零件号</td><td style="font-family:var(--font-mono)">'+data.part_no+'</td></tr><tr><td style="color:var(--text-dim)">名称</td><td>'+data.part_name+'</td></tr><tr><td style="color:var(--text-dim)">类型</td><td>'+data.part_type+'</td></tr><tr><td style="color:var(--text-dim)">供应商</td><td>'+data.supplier+'</td></tr><tr><td style="color:var(--text-dim)">项目</td><td style="font-family:var(--font-mono)">'+data.project_code+'</td></tr></table></div><div><div style="color:var(--text-dim);font-size:11px;text-transform:uppercase;margin-bottom:8px">关联任务</div>'+tasksHtml+'</div></div>';
+  } catch(e) { toast('加载详情失败','error'); }
+}
+
+// Tasks
+async function loadTaskDetail() {
+  const taskId = document.getElementById('task-id-search').value.trim();
+  if (!taskId) { toast('请输入任务ID','error'); return; }
+  try {
+    const res = await fetch(API+'/tasks/'+taskId);
+    if (!res.ok) { toast('任务不存在','error'); return; }
+    const data = await res.json();
+    document.getElementById('task-detail').style.display='block';
+    const t = data.task;
+    document.getElementById('task-info').innerHTML = '<table><tr><td style="color:var(--text-dim)">任务ID</td><td style="font-family:var(--font-mono)">'+t.id+'</td></tr><tr><td style="color:var(--text-dim)">状态</td><td><span class="badge badge-'+(t.state==='CLOSED'?'green':t.state==='CREATED'?'cyan':'amber')+'">'+t.state+'</span></td></tr><tr><td style="color:var(--text-dim)">创建时间</td><td style="font-family:var(--font-mono)">'+t.created_at+'</td></tr><tr><td style="color:var(--text-dim)">置信度</td><td style="font-family:var(--font-mono)">'+(t.overall_confidence||'—')+'</td></tr></table>';
+    document.getElementById('task-part-info').innerHTML = '<table><tr><td style="color:var(--text-dim)">零件号</td><td style="font-family:var(--font-mono)">'+data.part.part_no+'</td></tr><tr><td style="color:var(--text-dim)">名称</td><td>'+data.part.part_name+'</td></tr><tr><td style="color:var(--text-dim)">类型</td><td>'+data.part.part_type+'</td></tr></table>';
+    const tl = data.timeline||[];
+    document.getElementById('task-timeline').innerHTML = tl.length ? '<div class="timeline">'+tl.map(e=>'<div class="tl-item"><div class="tl-event">'+e.event+'</div><div class="tl-time">'+e.time+'</div></div>').join('')+'</div>' : '<div class="empty-state"><p>暂无事件</p></div>';
+    const reports = data.reports||[];
+    document.getElementById('task-reports').innerHTML = reports.length ? '<table><thead><tr><th>测试类型</th><th>日期</th><th>实验室</th><th>置信度</th></tr></thead><tbody>'+reports.map(r=>'<tr><td><span class="badge badge-cyan">'+r.test_type+'</span></td><td style="font-family:var(--font-mono)">'+r.test_date+'</td><td>'+r.lab_name+'</td><td style="font-family:var(--font-mono)">'+(r.overall_confidence?.toFixed(2)||'—')+'</td></tr>').join('')+'</tbody></table>' : '<div class="empty-state"><p>暂无已解析报告</p></div>';
+  } catch(e) { toast('查询失败','error'); }
+}
+
+// Upload
+let selectedFile = null;
+function onFileSelected(e) {
+  selectedFile = e.target.files[0];
+  document.getElementById('upload-file-name').textContent = selectedFile ? selectedFile.name : '';
+  document.getElementById('upload-btn').disabled = !selectedFile;
+}
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) { selectedFile = e.dataTransfer.files[0]; document.getElementById('upload-file-name').textContent=selectedFile.name; document.getElementById('upload-btn').disabled=false; }
+});
+async function uploadReport() {
+  const taskId = document.getElementById('upload-task-id').value.trim();
+  if (!taskId) { toast('请输入任务ID','error'); return; }
+  if (!selectedFile) { toast('请选择文件','error'); return; }
+  const form = new FormData();
+  form.append('file', selectedFile);
+  try {
+    const res = await fetch(API+'/tasks/'+taskId+'/reports', {method:'POST', body:form});
+    if (!res.ok) { const e = await res.json(); toast(e.detail||'上传失败','error'); return; }
+    const data = await res.json();
+    toast('上传成功 · '+data.filename,'success');
+    selectedFile=null;
+    document.getElementById('upload-file-name').textContent='';
+    document.getElementById('upload-btn').disabled=true;
+    document.getElementById('file-input').value='';
+  } catch(e) { toast('上传失败','error'); }
+}
+
+// Webhook
+async function sendWebhook() {
+  const body = {
+    mail_from: document.getElementById('mail-from').value,
+    mail_subject: document.getElementById('mail-subject').value.trim(),
+    part_no: document.getElementById('mail-part-no').value.trim(),
+    attachments: document.getElementById('mail-attachments').value.split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  if (!body.part_no) { toast('请填写零件号','error'); return; }
+  try {
+    const res = await fetch(API+'/webhooks/mail',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if (!res.ok) { const e = await res.json(); toast(e.detail||'发送失败','error'); return; }
+    const data = await res.json();
+    toast('邮件已接受 · 任务 '+data.task_id,'success');
+  } catch(e) { toast('请求失败','error'); }
+}
+
+// Init
+(async function init() {
+  try {
+    const res = await fetch('/health');
+    const health = await res.json();
+    document.getElementById('sys-status').innerHTML = '<span style="color:var(--green)">●</span> 系统就绪 · '+health.tests;
+    loadStats();
+  } catch(e) {
+    document.getElementById('sys-status').innerHTML = '<span style="color:var(--red)">●</span> API 未连接';
+  }
+})();
+</script>
+</body>
+</html>
