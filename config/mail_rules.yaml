@@ -1,0 +1,45 @@
+# 规则引擎配置 — Solo 可直接编辑，无需改代码
+# Code 在 MailGateway.__init__ 时加载此文件
+
+# --- 白名单规则 ---
+whitelist:
+  senders:
+    - "vendor1@example.com"
+    - "vendor2@supplier.cn"
+    - "lab@testing.org"
+    - "pateo@partner.com"        # Solo 新增供应商时在此添加
+  subject_keywords:
+    - "OTS"
+    - "认可"
+    - "测试报告"
+    - "PPAP"
+    - "交样"
+  attachment_exts:
+    - ".pdf"
+    - ".docx"
+    - ".xlsx"
+    - ".csv"
+    - ".zip"
+
+# --- 黑名单规则 ---
+blacklist:
+  subject_exclude_keywords:      # 包含任一关键词 → 直接 auto_rejected
+    - "团建"
+    - "工资条"
+    - "会议邀请"
+    - "Newsletter"
+  sender_patterns:                # 发件人匹配任一模式 → 直接 auto_rejected
+    - "noreply@*"
+    - "marketing@*"
+
+# --- 触发 LLM 的条件 ---
+llm_fallback:
+  # 满足以下任一条件 → 送入 LLM
+  - rule_result == "to_llm"     # 规则引擎无法判定
+  - subject_has_keyword_but_no_attachment  # 主题像但没附件（可能漏发）
+  - sender_not_in_whitelist_but_subject_looks_like_report
+
+# --- 批处理参数 ---
+batch:
+  max_mails_per_batch: 50       # 单次批处理最多处理 50 封邮件
+  llm_timeout_seconds: 60       # LLM 分类超时

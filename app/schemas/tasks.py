@@ -82,6 +82,7 @@ class TaskDetailResponse(BaseModel):
 class WebhookMailPayload(BaseModel):
     mail_from: str
     mail_subject: str
+    mail_body_preview: str = ""
     part_no: str
     attachments: list[str] = []
 
@@ -89,3 +90,24 @@ class WebhookMailPayload(BaseModel):
 class ReportUploadResponse(BaseModel):
     storage_path: str
     filename: str
+
+
+class MailClassificationResult(BaseModel):
+    mail_id: str
+    mail_from: str
+    mail_subject: str
+    status: str
+    classification: Optional[str] = None
+    part_no: Optional[str] = None
+    confidence: Optional[float] = None
+    reason: Optional[str] = None
+    classified_by: Optional[str] = None
+
+
+class MailBatchReport(BaseModel):
+    batch_id: str
+    total: int
+    auto_accepted: int
+    auto_rejected: int
+    pending_human: int
+    results: list[MailClassificationResult]

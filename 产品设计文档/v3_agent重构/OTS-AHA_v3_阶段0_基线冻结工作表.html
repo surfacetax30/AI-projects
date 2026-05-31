@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OTS-AHA v3 阶段0：产品基线冻结工作表</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #d8dee8;
+      --page: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #2457a6;
+      --teal: #087f7a;
+      --amber: #a86400;
+      --red: #b42318;
+      --green: #18794e;
+      --mark: #fff2a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 70px;
+    }
+    header {
+      padding: 28px 0 22px;
+      border-bottom: 3px solid var(--blue);
+    }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 32px; }
+    h2 {
+      margin-top: 36px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 23px;
+    }
+    h3 { margin-top: 18px; font-size: 17px; }
+    p { margin: 9px 0; }
+    mark {
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--mark);
+    }
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef1f5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .lead {
+      max-width: 900px;
+      margin-top: 14px;
+      font-size: 18px;
+      color: #26364d;
+    }
+    .meta, .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .meta div, .card, .todo, .question, .callout {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .meta b {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .callout {
+      border-left: 5px solid var(--teal);
+      background: #f0fbf9;
+    }
+    .warning {
+      border-left: 5px solid var(--amber);
+      background: #fff9ed;
+    }
+    .todo {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin: 10px 0;
+    }
+    .todo input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 4px;
+      accent-color: var(--blue);
+    }
+    .todo strong { display: block; margin-bottom: 3px; }
+    .todo small { display: block; color: var(--muted); }
+    .tag {
+      display: inline-block;
+      margin: 0 6px 6px 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e8f3ff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .field {
+      width: 100%;
+      min-height: 72px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      resize: vertical;
+      font: inherit;
+      line-height: 1.55;
+      background: #fff;
+    }
+    .field.short { min-height: 42px; }
+    .question {
+      margin: 12px 0;
+      border-left: 5px solid var(--blue);
+    }
+    .question h3 { margin-top: 0; }
+    .score {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .score label {
+      display: block;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      cursor: pointer;
+    }
+    .score input { margin-right: 4px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #edf3fb; color: #193b70; }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+      background: rgba(247, 249, 252, 0.94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    button {
+      border: 1px solid #b8c4d6;
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+    button.primary {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .status {
+      align-self: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer {
+      margin-top: 46px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media print {
+      .toolbar { display: none; }
+      body { background: #fff; }
+      main { max-width: none; padding: 20px; }
+      .todo, .question, .card, .callout { break-inside: avoid; box-shadow: none; }
+    }
+    @media (max-width: 860px) {
+      main { padding: 28px 18px 56px; }
+      h1 { font-size: 27px; }
+      .meta, .grid, .score { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="toolbar">
+    <button class="primary" type="button" id="saveBtn">保存填写内容</button>
+    <button type="button" id="clearBtn">清空本页填写</button>
+    <button type="button" onclick="window.print()">打印 / 导出 PDF</button>
+    <span class="status" id="saveStatus">填写内容会自动保存在当前浏览器。</span>
+  </div>
+
+  <header>
+    <h1>阶段 0：v3 产品基线冻结工作表</h1>
+    <p class="lead">
+      这份工作表帮你在进入 MVP 开发前完成一次产品基线冻结。
+      它既是 todo list，也是理解自测：你需要亲手填写关键定义，确认自己真的理解项目。
+    </p>
+    <section class="meta">
+      <div><b>目标</b>冻结 v3 MVP 产品口径，避免后续开发中范围漂移。</div>
+      <div><b>建议耗时</b>首次填写 60-90 分钟；二轮复盘 30 分钟。</div>
+      <div><b>输入资料</b>v3 PRD、Agent 链路图、Agent 架构图、OTS评测方案 v2.0。</div>
+      <div><b>完成标准</b>所有 P0 todo 完成，理解自测平均 ≥ 4 分，关键对象定义无空白。</div>
+    </section>
+  </header>
+
+  <section>
+    <h2>1. 阶段 0 完成定义</h2>
+    <div class="callout">
+      <strong>阶段 0 不是写代码。</strong>
+      它的产出是“共识”：MVP 到底服务谁、解决什么问题、哪些 Agent 负责什么、哪些能力暂时不做、评测如何证明做对了。
+    </div>
+    <textarea class="field" data-save="stage0_definition" placeholder="用你自己的话写：阶段 0 完成后，我希望团队对哪些事情形成共识？"></textarea>
+  </section>
+
+  <section>
+    <h2>2. P0 Todo List：必须完成</h2>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p0_1">
+      <span>
+        <strong>确认 MVP 一句话目标</strong>
+        <small>建议口径：PE 每天处理 OTS 资料时，系统自动接入、理解、识别问题、给出建议，并交由 PE 确认推进。</small>
+        <textarea class="field short" data-save="answer_mvp_goal" placeholder="请用不超过 80 字写出你的 MVP 一句话目标。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p0_2">
+      <span>
+        <strong>冻结 Agent 边界</strong>
+        <small>确认 Intake、Document Understanding、Approval Readiness、Orchestrator、Human Review 的职责不重叠。</small>
+        <textarea class="field" data-save="answer_agent_boundary" placeholder="写下每个 Agent 的一句话职责。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p0_3">
+      <span>
+        <strong>冻结核心对象词典</strong>
+        <small>必须能解释 SourceDocument、DocumentEvidence、DocumentIssue、ReadinessDecision、PERecommendation、ReviewItem。</small>
+        <textarea class="field" data-save="answer_object_glossary" placeholder="逐个写下这些对象是什么，以及由谁产生、谁消费。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p0_4">
+      <span>
+        <strong>明确 MVP 不做清单</strong>
+        <small>独立 RAG Agent、Report Agent、SFT、供应商门户、复杂返工根因分析都不进入 MVP。</small>
+        <textarea class="field short" data-save="answer_out_of_scope" placeholder="写下 MVP 不做什么，以及为什么现在不做。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p0_5">
+      <span>
+        <strong>确认评测集建设目标</strong>
+        <small>从 Parser 评测升级为覆盖字段提取、问题识别、就绪判断、PE 建议的 MVP v3 评测集。</small>
+        <textarea class="field" data-save="answer_eval_goal" placeholder="写下 MVP 阶段评测集应覆盖哪些能力，以及第一版不覆盖哪些能力。"></textarea>
+      </span>
+    </label>
+  </section>
+
+  <section>
+    <h2>3. P1 Todo List：建议完成</h2>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p1_1">
+      <span>
+        <strong>画一遍你自己的核心链路</strong>
+        <small>资料进入 → 文档证据化 → 问题识别 → PE 建议 → 人工确认/推进。</small>
+        <textarea class="field" data-save="answer_my_flow" placeholder="用文字画出你理解的链路，写出每一步输入输出。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p1_2">
+      <span>
+        <strong>列出 5 个最危险的业务错误</strong>
+        <small>例如 PASS/FAIL 颠倒、非报告误判、版本冲突静默覆盖、RAG 案例被当成审批依据。</small>
+        <textarea class="field" data-save="answer_risks" placeholder="列出你认为最危险的 5 个错误，以及应该如何评测/拦截。"></textarea>
+      </span>
+    </label>
+    <label class="todo">
+      <input type="checkbox" data-save="todo_p1_3">
+      <span>
+        <strong>准备 3 个真实 PE 场景</strong>
+        <small>收到报告、资料缺失、测试 FAIL 或版本冲突。每个场景要能映射到评测 case。</small>
+        <textarea class="field" data-save="answer_pe_scenarios" placeholder="写 3 个 PE 日常场景，每个包含输入资料、系统输出、PE 动作。"></textarea>
+      </span>
+    </label>
+  </section>
+
+  <section>
+    <h2>4. 理解自测：给自己打分</h2>
+    <div class="warning callout">
+      <strong>评分规则：</strong>
+      1 分 = 说不清；3 分 = 能复述文档；5 分 = 能独立判断边界和取舍。
+      如果某题低于 4 分，建议回到 PRD 或链路图重读。
+    </div>
+
+    <article class="question">
+      <h3>Q1：为什么 MailGateway 要升级成 Intake Agent？</h3>
+      <div class="score" data-group="score_q1"></div>
+      <textarea class="field" data-save="answer_q1" placeholder="请解释：如果继续叫 MailGateway，会限制哪些产品能力？"></textarea>
+    </article>
+
+    <article class="question">
+      <h3>Q2：DocumentEvidence 和 DocumentIssue 有什么区别？</h3>
+      <div class="score" data-group="score_q2"></div>
+      <textarea class="field" data-save="answer_q2" placeholder="请用一个测试报告 FAIL 的例子说明证据和问题的区别。"></textarea>
+    </article>
+
+    <article class="question">
+      <h3>Q3：为什么 PERecommendation 不应该由 Document Understanding Agent 单独生成？</h3>
+      <div class="score" data-group="score_q3"></div>
+      <textarea class="field" data-save="answer_q3" placeholder="请说明：建议为什么需要任务上下文、规则和历史案例？"></textarea>
+    </article>
+
+    <article class="question">
+      <h3>Q4：RAG 历史案例在 MVP 里应该是什么地位？</h3>
+      <div class="score" data-group="score_q4"></div>
+      <textarea class="field" data-save="answer_q4" placeholder="请说明：RAG 为什么是参考依据，而不是审批依据？"></textarea>
+    </article>
+
+    <article class="question">
+      <h3>Q5：什么情况下系统必须进入 Human Review Workbench？</h3>
+      <div class="score" data-group="score_q5"></div>
+      <textarea class="field" data-save="answer_q5" placeholder="列出至少 5 种必须人工确认的情况。"></textarea>
+    </article>
+
+    <article class="question">
+      <h3>Q6：MVP 评测集为什么不能只测字段提取？</h3>
+      <div class="score" data-group="score_q6"></div>
+      <textarea class="field" data-save="answer_q6" placeholder="请解释字段提取、问题识别、就绪判断、PE建议之间的关系。"></textarea>
+    </article>
+  </section>
+
+  <section>
+    <h2>5. 阶段 0 输出物清单</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>输出物</th>
+          <th>你需要确认的问题</th>
+          <th>完成状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>v3 MVP 一句话目标</td>
+          <td>是否能让非项目成员 30 秒内理解你要做什么？</td>
+          <td><textarea class="field short" data-save="deliverable_goal_status" placeholder="未开始 / 进行中 / 已确认"></textarea></td>
+        </tr>
+        <tr>
+          <td>Agent 边界表</td>
+          <td>是否每个 Agent 都能说清输入、输出、失败后去哪？</td>
+          <td><textarea class="field short" data-save="deliverable_agent_status" placeholder="未开始 / 进行中 / 已确认"></textarea></td>
+        </tr>
+        <tr>
+          <td>核心对象词典</td>
+          <td>是否每个对象都能说清谁创建、谁消费、是否需要持久化？</td>
+          <td><textarea class="field short" data-save="deliverable_object_status" placeholder="未开始 / 进行中 / 已确认"></textarea></td>
+        </tr>
+        <tr>
+          <td>MVP 不做清单</td>
+          <td>是否能抵抗范围膨胀，尤其是独立 RAG Agent 和 Report Agent？</td>
+          <td><textarea class="field short" data-save="deliverable_scope_status" placeholder="未开始 / 进行中 / 已确认"></textarea></td>
+        </tr>
+        <tr>
+          <td>MVP v3 评测集建设计划</td>
+          <td>是否覆盖字段提取、问题识别、就绪判断、PE建议？</td>
+          <td><textarea class="field short" data-save="deliverable_eval_status" placeholder="未开始 / 进行中 / 已确认"></textarea></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. 我的阶段 0 复盘</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>我现在最清楚的 3 件事</h3>
+        <textarea class="field" data-save="review_clear" placeholder="写下你最确定的 3 个判断。"></textarea>
+      </div>
+      <div class="card">
+        <h3>我现在最不确定的 3 件事</h3>
+        <textarea class="field" data-save="review_unclear" placeholder="写下你仍然模糊或需要继续讨论的 3 个问题。"></textarea>
+      </div>
+      <div class="card">
+        <h3>我准备进入阶段 1 的条件</h3>
+        <textarea class="field" data-save="review_ready" placeholder="写下你认为进入评测集建设前必须满足的条件。"></textarea>
+      </div>
+      <div class="card">
+        <h3>我需要向 PE 验证的问题</h3>
+        <textarea class="field" data-save="review_pe_questions" placeholder="列出需要找 PE 或业务专家确认的问题。"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    本工作表是本地 HTML，可在浏览器中填写并自动保存到 localStorage。若更换浏览器或清空缓存，填写内容不会自动迁移；需要长期留存时请打印为 PDF 或手动复制到正式文档。
+  </footer>
+</main>
+
+<script>
+  const KEY_PREFIX = "ots_aha_stage0_";
+  const status = document.getElementById("saveStatus");
+
+  function buildScores() {
+    document.querySelectorAll(".score").forEach(group => {
+      const name = group.dataset.group;
+      group.innerHTML = "";
+      for (let i = 1; i <= 5; i += 1) {
+        const id = `${name}_${i}`;
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="radio" name="${name}" id="${id}" value="${i}" data-save="${name}">${i}`;
+        group.appendChild(label);
+      }
+    });
+  }
+
+  function loadValues() {
+    document.querySelectorAll("[data-save]").forEach(el => {
+      const key = KEY_PREFIX + el.dataset.save;
+      const value = localStorage.getItem(key);
+      if (value === null) return;
+      if (el.type === "checkbox") el.checked = value === "true";
+      else if (el.type === "radio") el.checked = el.value === value;
+      else el.value = value;
+    });
+  }
+
+  function saveValues() {
+    document.querySelectorAll("[data-save]").forEach(el => {
+      const key = KEY_PREFIX + el.dataset.save;
+      if (el.type === "checkbox") localStorage.setItem(key, el.checked ? "true" : "false");
+      else if (el.type === "radio") {
+        if (el.checked) localStorage.setItem(key, el.value);
+      } else {
+        localStorage.setItem(key, el.value);
+      }
+    });
+    status.textContent = "已保存：" + new Date().toLocaleString();
+  }
+
+  function clearValues() {
+    if (!confirm("确认清空本页所有填写内容？此操作只影响浏览器本地保存，不删除文件。")) return;
+    Object.keys(localStorage)
+      .filter(key => key.startsWith(KEY_PREFIX))
+      .forEach(key => localStorage.removeItem(key));
+    document.querySelectorAll("[data-save]").forEach(el => {
+      if (el.type === "checkbox" || el.type === "radio") el.checked = false;
+      else el.value = "";
+    });
+    status.textContent = "已清空本页填写内容。";
+  }
+
+  buildScores();
+  loadValues();
+  document.querySelectorAll("[data-save]").forEach(el => {
+    el.addEventListener("input", saveValues);
+    el.addEventListener("change", saveValues);
+  });
+  document.getElementById("saveBtn").addEventListener("click", saveValues);
+  document.getElementById("clearBtn").addEventListener("click", clearValues);
+</script>
+</body>
+</html>

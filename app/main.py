@@ -12,30 +12,25 @@ from app.db.session import engine
 from app.db.models import Base  # noqa: F401 — register models
 from app.events.bus import event_bus
 from app.events.types import EventType, Event
-from app.agents.mail_gateway import MailGateway
 from app.agents.parser import ReportParser
 from app.agents.data_checker import DataChecker
 
 logger = logging.getLogger(__name__)
 
-mail_gateway = MailGateway()
 parser = ReportParser()
 data_checker = DataChecker()
 
 
 async def _handle_report_received(event: Event):
+    """Pipeline handler — 邮件过滤已前置到 MailGateway.batch_process，此处直接解析。"""
     payload = event.payload
     task_id = payload.get("task_id", "")
     logger.info(f"[Pipeline] Received report for task={task_id}")
 
-    gateway_result = await mail_gateway.process(payload)
-    if not gateway_result.get("accepted"):
-        logger.info(f"[Pipeline] MailGateway rejected: {gateway_result.get('reason')}")
-        return
-
+    # MailGateway 过滤已在批处理中完成，此处跳过
     parse_result = await parser.process({
         "task_id": task_id,
-        "part_no": gateway_result.get("part_no", payload.get("part_no", "")),
+        "part_no": payload.get("part_no", ""),
         "filename": payload.get("filename", "unknown"),
         "storage_path": payload.get("storage_path", ""),
         "report_text": payload.get("report_text", ""),
@@ -69,7 +64,7 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     event_bus.subscribe(EventType.REPORT_RECEIVED, _handle_report_received)
     await event_bus.start()
-    logger.info("[OTS-AHA] Event bus started. Pipeline: mail_gateway → parser → data_checker")
+    logger.info("[OTS-AHA] Event bus started. Pipeline: parser → data_checker  (mail gateway runs as daily batch)")
     yield
     await event_bus.stop()
     logger.info("[OTS-AHA] Shutdown complete.")
@@ -88,11 +83,12 @@ async def root():
 
 from app.api.parts import router as parts_router
 from app.api.tasks import router as tasks_router
-from app.api.tasks import webhook_router
+from app.api.tasks import webhook_router, mail_router
 
 app.include_router(parts_router)
 app.include_router(tasks_router)
 app.include_router(webhook_router)
+app.include_router(mail_router)
 
 
 @app.get("/health")

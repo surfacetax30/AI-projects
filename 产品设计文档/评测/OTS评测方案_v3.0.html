@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OTS-AHA 评测方案 v3.0</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #d8dee8;
+      --blue: #1f5e8c;
+      --blue-2: #e7f2fa;
+      --green: #1f7a4d;
+      --green-2: #e6f4ea;
+      --yellow: #8a5a00;
+      --yellow-2: #fff3cf;
+      --red: #a23b2a;
+      --red-2: #fde8e3;
+      --gray: #f6f8fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.58;
+      background: #ffffff;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 42px 28px 72px;
+    }
+    header {
+      border-bottom: 3px solid var(--blue);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 36px;
+      line-height: 1.16;
+      color: var(--blue);
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: 17px;
+      color: var(--muted);
+    }
+    h2 {
+      margin: 38px 0 14px;
+      padding-left: 12px;
+      border-left: 5px solid var(--blue);
+      font-size: 24px;
+      line-height: 1.3;
+    }
+    h3 {
+      margin: 26px 0 10px;
+      font-size: 18px;
+      color: #2f4666;
+    }
+    p { margin: 8px 0 14px; }
+    mark {
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: inherit;
+      background: #fff0a6;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .meta-card,
+    .callout,
+    .metric-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .meta-card {
+      padding: 14px 16px;
+      min-height: 118px;
+    }
+    .meta-card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--blue);
+    }
+    .callout {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border-left: 5px solid var(--yellow);
+      background: var(--yellow-2);
+    }
+    .callout.red {
+      border-left-color: var(--red);
+      background: var(--red-2);
+    }
+    .callout.green {
+      border-left-color: var(--green);
+      background: var(--green-2);
+    }
+    .callout.blue {
+      border-left-color: var(--blue);
+      background: var(--blue-2);
+    }
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+      align-items: stretch;
+    }
+    .node {
+      position: relative;
+      padding: 14px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--gray);
+      text-align: center;
+      min-height: 110px;
+    }
+    .node::after {
+      content: "→";
+      position: absolute;
+      right: -13px;
+      top: 38%;
+      color: var(--blue);
+      font-weight: 700;
+    }
+    .node:last-child::after { content: ""; }
+    .node strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--blue);
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .metric-card {
+      padding: 14px 14px 16px;
+      background: #ffffff;
+    }
+    .metric-card .weight {
+      display: inline-block;
+      margin-bottom: 9px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .metric-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .metric-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      table-layout: fixed;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    th {
+      color: #fff;
+      background: var(--blue);
+      text-align: left;
+    }
+    tr:nth-child(even) td { background: #fbfcfe; }
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--blue-2);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .danger { color: var(--red); font-weight: 700; }
+    .ok { color: var(--green); font-weight: 700; }
+    pre {
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101827;
+      color: #eef4ff;
+      font-size: 13px;
+    }
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+      background: #fff;
+    }
+    .step strong {
+      display: block;
+      color: var(--blue);
+      margin-bottom: 5px;
+    }
+    @media (max-width: 900px) {
+      .meta-grid,
+      .metric-grid,
+      .flow,
+      .checklist {
+        grid-template-columns: 1fr;
+      }
+      .node::after { content: ""; }
+      main { padding: 30px 18px 52px; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>OTS-AHA 评测方案 v3.0</h1>
+    <p class="subtitle">从 Parser/SP 评测升级为 <mark>v3 Agent MVP 核心链路评测</mark></p>
+  </header>
+
+  <section class="meta-grid">
+    <div class="meta-card"><strong>评测对象</strong>Intake / Document Understanding / Approval Readiness / Human Review Workbench</div>
+    <div class="meta-card"><strong>修订依据</strong>在 v2.0 Parser/SP 评测基础上，补充问题识别、PE建议、就绪判断</div>
+    <div class="meta-card"><strong>核心原则</strong>真实报告优先；评测先于优化；建议不替代 PE 决策</div>
+    <div class="meta-card"><strong>产出目标</strong>MVP 阶段建立最小可信评测集，并跑出第一版基线分</div>
+  </section>
+
+  <div class="callout">
+    <strong>重点结论</strong>
+    v2.0 的指标设计适合作为 Parser/SP 单点评测，但已经不足以衡量 v3 MVP 的产品目标。v3.0 必须覆盖 <mark>资料接入、文档证据化、问题识别、PE建议、任务级认可就绪判断</mark>。
+  </div>
+
+  <h2>1. 评测对象与核心目标</h2>
+  <p>v3 MVP 的核心目标不是单纯“把报告字段解析出来”，而是帮助 PE 每天处理 OTS 认可资料包：系统接入资料、理解文档、识别问题、提出建议，并把不确定事项交给 PE 形成闭环。</p>
+  <div class="flow">
+    <div class="node"><strong>资料接入</strong>SourceDocument<br>来源、格式、版本、关联任务</div>
+    <div class="node"><strong>文档证据化</strong>DocumentEvidence<br>字段、证据、置信度、状态</div>
+    <div class="node"><strong>问题识别</strong>DocumentIssue<br>FAIL、冲突、缺失、异常</div>
+    <div class="node"><strong>PE 建议</strong>PERecommendation<br>动作、理由、历史案例参考</div>
+    <div class="node"><strong>就绪判断</strong>ReadinessDecision<br>会签、补料、人审、阻断</div>
+  </div>
+  <div class="callout red">
+    <strong>产品边界</strong>
+    LLM 可以输出证据、问题和建议，但不直接输出最终审批决定；任务状态只能由 Orchestrator 根据状态机和人工确认结果推进。
+  </div>
+
+  <h2>2. v3.0 评测维度与权重</h2>
+  <div class="metric-grid">
+    <div class="metric-card"><span class="weight">30%</span><h3>文档证据准确性</h3><p>继承 Parser/SP 基本盘，评估核心字段、证据出处和文档类型。</p></div>
+    <div class="metric-card"><span class="weight">20%</span><h3>置信度与状态校准</h3><p>判断哪些结果能自动使用，哪些必须交给 PE。</p></div>
+    <div class="metric-card"><span class="weight">20%</span><h3>测试问题识别</h3><p>验证系统是否能看出测试文档中的业务问题。</p></div>
+    <div class="metric-card"><span class="weight">20%</span><h3>认可就绪判断</h3><p>判断资料包能否推进会签、补料、人审或阻断。</p></div>
+    <div class="metric-card"><span class="weight">10%</span><h3>PE 建议质量</h3><p>评估建议是否有依据、可执行、不越权。</p></div>
+  </div>
+  <table>
+    <thead><tr><th>评测维度</th><th>为什么重要</th><th>MVP 建议达标线</th></tr></thead>
+    <tbody>
+      <tr><td>文档证据准确性</td><td>这是所有后续判断的地基。</td><td>核心字段准确率 ≥90%；test_result 不允许高风险反向错误。</td></tr>
+      <tr><td>置信度与状态校准</td><td>决定自动推进和人工确认边界。</td><td>校准偏差 ≤0.20；field_status 判断准确率 ≥90%。</td></tr>
+      <tr><td>测试问题识别能力</td><td>从“读懂字段”升级到“看出问题”。</td><td>关键问题召回率 ≥85%；严重等级判断准确率 ≥75%。</td></tr>
+      <tr><td>认可就绪判断能力</td><td>对应 PE 是否能知道资料包能不能推进。</td><td>任务级判断准确率 ≥80%；阻断型问题漏判为 0。</td></tr>
+      <tr><td>PE 建议质量</td><td>体现 Agent 对 PE 的辅助价值。</td><td>建议被采纳或小改后采纳率 ≥60%；100% 给出依据。</td></tr>
+    </tbody>
+  </table>
+  <div class="callout blue">
+    <strong>门禁而非加分</strong>
+    JSON/Schema 输出规范性不再作为 15% 权重项，而应作为 Gate：格式不合格则该 case 直接不可用或进入修复。
+  </div>
+
+  <h2>3. 分维度指标定义</h2>
+  <h3>3.1 DocumentEvidence：文档证据准确性</h3>
+  <table>
+    <thead><tr><th>指标</th><th>定义</th><th>阈值</th></tr></thead>
+    <tbody>
+      <tr><td>核心字段准确率</td><td>part_no、supplier、test_item、test_result、test_standard、software_version 等核心字段逐项比对 GT。</td><td>≥90%</td></tr>
+      <tr><td>证据出处命中率</td><td>每个关键字段必须能回指页码、表格、段落或单元格。</td><td>≥85%</td></tr>
+      <tr><td>文档类型识别准确率</td><td>区分测试报告、软件版本报告、补充说明、非 OTS 资料。</td><td>≥90%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 置信度与状态校准</h3>
+  <table>
+    <thead><tr><th>指标</th><th>定义</th><th>阈值</th></tr></thead>
+    <tbody>
+      <tr><td>置信度校准偏差</td><td>预测置信度与实际正确率之间的偏差。</td><td>≤0.20</td></tr>
+      <tr><td>field_status 准确率</td><td>correct / ambiguous / missing / conflict / low_confidence 的判断准确率。</td><td>≥90%</td></tr>
+      <tr><td>高置信误判率</td><td>confidence ≥0.85 但结果错误的比例。</td><td>≤5%</td></tr>
+      <tr><td>低置信召回率</td><td>真实不确定、缺失、冲突字段被标为需确认的比例。</td><td>≥85%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 DocumentIssue：测试问题识别能力</h3>
+  <table>
+    <thead><tr><th>问题类型</th><th>示例</th><th>输出要求</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag">test_failed</span></td><td>测试项 FAIL、NG、不满足标准。</td><td>指出问题字段、原文证据、影响范围。</td></tr>
+      <tr><td><span class="tag">conditional_pass</span></td><td>有条件通过、限用、需补充验证。</td><td>不能简单归为 PASS，需进入人审或补料。</td></tr>
+      <tr><td><span class="tag">version_conflict</span></td><td>报告软件版本与任务/其他文档版本不一致。</td><td>指出冲突双方及来源。</td></tr>
+      <tr><td><span class="tag">standard_missing</span></td><td>缺少测试标准、判定依据、限值。</td><td>进入 need_supplement 或 need_human_review。</td></tr>
+      <tr><td><span class="tag">value_anomaly</span></td><td>数值异常、单位不一致、边界值临界。</td><td>给出异常原因与置信度。</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>指标</th><th>定义</th><th>阈值</th></tr></thead>
+    <tbody>
+      <tr><td>关键问题召回率</td><td>GT 标注为严重/阻断的问题被识别出来。</td><td>≥85%</td></tr>
+      <tr><td>问题类型准确率</td><td>DocumentIssue.type 与 GT 一致。</td><td>≥80%</td></tr>
+      <tr><td>严重等级准确率</td><td>blocking / warning / info 与 GT 一致。</td><td>≥75%</td></tr>
+      <tr><td>高风险漏判</td><td>阻断型 FAIL、版本冲突被判断为无问题。</td><td><span class="danger">0 容忍</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.4 ReadinessDecision：认可就绪判断</h3>
+  <table>
+    <thead><tr><th>状态</th><th>含义</th><th>典型触发条件</th></tr></thead>
+    <tbody>
+      <tr><td>ready_for_signing</td><td>资料包可进入会签。</td><td>核心资料齐全，无阻断问题，无待确认高风险项。</td></tr>
+      <tr><td>need_supplement</td><td>需要补充资料。</td><td>缺少测试报告、标准、版本说明、签章页等必要材料。</td></tr>
+      <tr><td>need_human_review</td><td>需要 PE 判断。</td><td>存在低置信、边界通过、口径不一致、建议需要人工确认。</td></tr>
+      <tr><td>blocked_by_conflict</td><td>被冲突或严重问题阻断。</td><td>FAIL、版本冲突、关键标准缺失、证据互相矛盾。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.5 PERecommendation：PE 建议质量</h3>
+  <table>
+    <thead><tr><th>指标</th><th>定义</th><th>阈值</th></tr></thead>
+    <tbody>
+      <tr><td>建议动作准确率</td><td>建议补料、复测、确认版本、推进会签等动作是否合理。</td><td>≥70%</td></tr>
+      <tr><td>建议采纳率</td><td>PE 直接采纳或小改后采纳的比例。</td><td>≥60%</td></tr>
+      <tr><td>依据完整率</td><td>建议必须引用 DocumentEvidence、DocumentIssue 或历史案例来源。</td><td>100%</td></tr>
+      <tr><td>越权率</td><td>建议不能替 PE 做最终审批，不能把 RAG 案例当审批依据。</td><td><span class="danger">0%</span></td></tr>
+      <tr><td>历史案例适配率</td><td>引用历史案例与当前问题类型、物料、测试项相似。</td><td>≥80%</td></tr>
+    </tbody>
+  </table>
+  <div class="callout green">
+    <strong>PERecommendation 展示规则</strong>
+    每条建议必须包含：建议动作、理由、证据引用、历史案例参考、是否需要 PE 确认。RAG 的定位是“经验参考”，不是“自动审批依据”。
+  </div>
+
+  <h2>4. 门禁项与一票否决</h2>
+  <table>
+    <thead><tr><th>编号</th><th>门禁/否决项</th><th>处理方式</th></tr></thead>
+    <tbody>
+      <tr><td>G1</td><td>输出不符合 Schema，无法被系统消费。</td><td>该 case 判定为不可用，必须修复格式后重跑。</td></tr>
+      <tr><td>V1</td><td>PASS/FAIL 方向性反转。</td><td>一票否决</td></tr>
+      <tr><td>V2</td><td>CONDITIONAL/BORDERLINE 被直接归为 PASS 且未触发人审。</td><td>一票否决</td></tr>
+      <tr><td>V3</td><td>非 OTS 资料被识别为有效测试报告并推进。</td><td>一票否决</td></tr>
+      <tr><td>V4</td><td>阻断型 DocumentIssue 未识别或被降级。</td><td>一票否决</td></tr>
+      <tr><td>V5</td><td>ReadinessDecision 将 blocked/need_supplement 判断为 ready_for_signing。</td><td>一票否决</td></tr>
+      <tr><td>V6</td><td>PERecommendation 直接替 PE 下审批结论。</td><td>一票否决</td></tr>
+      <tr><td>V7</td><td>RAG 历史案例无来源或被当作当前审批证据。</td><td>一票否决</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. MVP 评测集设计</h2>
+  <table>
+    <thead><tr><th>子集</th><th>建议数量</th><th>覆盖内容</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>A. Parser/SP 字段抽取集</td><td>沿用并清洗现有 26 个 case</td><td>PDF/DOCX/XLSX；核心字段、置信度、field_status</td><td>保留 v2.0 的基本盘</td></tr>
+      <tr><td>B. Issue Detection 问题识别集</td><td>8-12 个 case</td><td>FAIL、边界通过、版本冲突、标准缺失、数值异常</td><td>验证文档理解是否真正理解问题</td></tr>
+      <tr><td>C. Readiness 资料包就绪集</td><td>6-8 个任务包</td><td>每个任务包含 2-5 份资料，覆盖缺料/冲突/可会签</td><td>验证任务级判断</td></tr>
+      <tr><td>D. Recommendation 建议集</td><td>5-8 个 case</td><td>补料建议、复测建议、版本确认建议、会签推进建议</td><td>验证建议是否能帮 PE 省时间</td></tr>
+      <tr><td>E. Intake/Negative 接入与负样本集</td><td>8-10 个 case</td><td>非 OTS 邮件/附件、重复资料、错发资料、弱相关资料</td><td>避免垃圾资料进入后续链路</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>MVP 完成标准</strong>
+    评测集建立完成不是指样本数量很多，而是每个核心能力都有 <mark>GT、覆盖矩阵、可运行脚本、基线分和错误归因方式</mark>。
+  </div>
+
+  <h2>6. GT 标注结构升级</h2>
+  <table>
+    <thead><tr><th>对象</th><th>必须标注字段</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>SourceDocument</td><td>source_type、file_type、doc_type、received_at、version_hint、is_ots_related</td><td>接入与分类评测</td></tr>
+      <tr><td>DocumentEvidence</td><td>field_name、value、field_status、confidence、evidence_ref、normalization_note</td><td>字段和证据质量评测</td></tr>
+      <tr><td>DocumentIssue</td><td>issue_type、severity、evidence_ref、affected_field、suggested_review_reason</td><td>问题识别评测</td></tr>
+      <tr><td>ReadinessDecision</td><td>decision、missing_items、blocking_issues、review_items、rationale</td><td>任务级就绪判断评测</td></tr>
+      <tr><td>PERecommendation</td><td>action、reason、evidence_refs、historical_case_refs、requires_human_confirmation</td><td>建议质量评测</td></tr>
+    </tbody>
+  </table>
+  <pre><code>{
+  "case_id": "OTS-ISSUE-001",
+  "source_documents": [
+    {"doc_id": "D1", "doc_type": "test_report", "file_type": "pdf"}
+  ],
+  "expected_evidence": [
+    {"field_name": "test_result", "value": "FAIL", "field_status": "correct", "evidence_ref": "p3.table2.r5"}
+  ],
+  "expected_issues": [
+    {"issue_type": "test_failed", "severity": "blocking", "evidence_ref": "p3.table2.r5"}
+  ],
+  "expected_readiness": {
+    "decision": "blocked_by_conflict",
+    "blocking_issues": ["test_failed"]
+  },
+  "expected_recommendation": {
+    "action": "request_retest_or_supplier_explanation",
+    "requires_human_confirmation": true
+  }
+}</code></pre>
+
+  <h2>7. 评测流程与角色分工</h2>
+  <div class="checklist">
+    <div class="step"><strong>1. 升级标注指南</strong>新增 DocumentIssue、ReadinessDecision、PERecommendation 的定义和示例。</div>
+    <div class="step"><strong>2. 清洗现有 Parser/SP 集</strong>统一字段命名、置信度口径和 evidence_ref。</div>
+    <div class="step"><strong>3. 补充问题识别样本</strong>优先从真实失败、边界通过、版本冲突报告中抽样。</div>
+    <div class="step"><strong>4. 补充资料包就绪样本</strong>按“一个 OTS 认可任务”组织多文档 case。</div>
+    <div class="step"><strong>5. 补充建议样本</strong>让 PE 标注理想建议动作和不可接受建议边界。</div>
+    <div class="step"><strong>6. 执行基线评测</strong>输出整体分、分维度分、一票否决列表和 Top 错误原因。</div>
+  </div>
+
+  <h2>8. 接下来评测集方向的执行清单</h2>
+  <table>
+    <thead><tr><th>优先级</th><th>任务</th><th>交付物</th><th>完成标准</th></tr></thead>
+    <tbody>
+      <tr><td>P0</td><td>冻结 v3 输出 Schema</td><td>schema_v3.json / 产品对象说明</td><td>五个对象字段稳定。</td></tr>
+      <tr><td>P0</td><td>整理现有 26 个 Parser/SP case</td><td>eval_cases_parser_v3.json</td><td>所有 case 有 GT、来源、字段级 evidence_ref、field_status。</td></tr>
+      <tr><td>P0</td><td>新增 8-12 个问题识别 case</td><td>issue_cases_v3.json</td><td>覆盖 FAIL、边界通过、版本冲突、标准缺失、数值异常。</td></tr>
+      <tr><td>P1</td><td>新增 6-8 个任务级资料包 case</td><td>readiness_cases_v3.json</td><td>每个 case 至少 2 份资料，标注最终 readiness GT。</td></tr>
+      <tr><td>P1</td><td>新增 5-8 个 PE 建议 case</td><td>recommendation_cases_v3.json</td><td>PE 标注理想动作、可接受动作、不可接受越权动作。</td></tr>
+      <tr><td>P1</td><td>小样本 PE 复核</td><td>review_notes_v3.xlsx 或 docx</td><td>每类样本至少 2 个由 PE 二次确认。</td></tr>
+      <tr><td>P2</td><td>评测脚本与报告模板</td><td>run_eval_v3.py / 评测报告_v3_baseline</td><td>能一键输出分维度分数、失败 case、归因标签。</td></tr>
+    </tbody>
+  </table>
+  <div class="callout green">
+    <strong>下一目标建议</strong>
+    MVP 阶段的目标应定义为：完成覆盖字段提取、问题识别、就绪判断、PE 建议的 <mark>最小可信评测集</mark>，并跑出第一版基线分。不要先追求高分，先追求可测、可归因、可回归。
+  </div>
+
+  <h2>9. 版本历史</h2>
+  <table>
+    <thead><tr><th>版本</th><th>定位</th><th>主要变化</th></tr></thead>
+    <tbody>
+      <tr><td>v2.0</td><td>Parser/SP 评测方案</td><td>聚焦字段提取、置信度校准、边界鲁棒性、输出规范性。</td></tr>
+      <tr><td>v3.0</td><td>v3 Agent MVP 链路评测方案</td><td>新增资料接入、文档证据化、问题识别、PE建议、认可就绪判断和人审闭环评测。</td></tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

@@ -82,3 +82,23 @@ class ChecklistTemplate(Base):
     version: Mapped[int] = mapped_column(default=1)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class PendingMail(Base):
+    __tablename__ = "pending_mails"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=_new_id)
+    mail_from: Mapped[str] = mapped_column(String(256))
+    mail_subject: Mapped[str] = mapped_column(String(512))
+    mail_body_preview: Mapped[str] = mapped_column(Text, default="")
+    attachments: Mapped[list] = mapped_column(JSON, default=list)
+    received_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
+    classification: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    classified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    classified_by: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    reason: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    part_no: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    task_id: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
+    batch_id: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)

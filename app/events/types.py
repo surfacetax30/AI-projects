@@ -23,6 +23,11 @@ class EventType:
     TASK_STATE_CHANGED   = "task.state_changed"    # Orchestrator → Notify
     REWORK_TRIGGERED     = "rework.triggered"      # Orchestrator → Notify
     NOTIFY_SEND          = "notify.send"           # → Notification consumer
+    MAIL_BATCH_STARTED    = "mail.batch_started"    # 邮件批处理开始
+    MAIL_CLASSIFIED       = "mail.classified"       # 单封邮件分类完成
+    MAIL_BATCH_COMPLETED  = "mail.batch_completed"  # 邮件批处理完成
+    MAIL_HUMAN_NEEDED     = "mail.human_needed"     # 有邮件需人工审核
+    MAIL_REJECTED         = "mail.rejected"         # 邮件被过滤拒绝
 
 
 @dataclass

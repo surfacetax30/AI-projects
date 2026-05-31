@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OTS-AHA v3 Agent 架构图</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #d8dee8;
+      --page: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #2457a6;
+      --teal: #087f7a;
+      --amber: #a86400;
+      --red: #b42318;
+      --green: #18794e;
+      --purple: #6f42c1;
+      --mark: #fff2a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 64px;
+    }
+    header {
+      padding: 30px 0 24px;
+      border-bottom: 3px solid var(--purple);
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; }
+    h1 { font-size: 34px; letter-spacing: 0; }
+    h2 {
+      margin-top: 38px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 24px;
+    }
+    h3 { margin-top: 22px; font-size: 18px; }
+    p { margin: 10px 0; }
+    mark {
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--mark);
+      color: #241a00;
+    }
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef1f5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    th, td {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #f2effb; color: #4f2b8a; }
+    .lead {
+      max-width: 920px;
+      margin-top: 18px;
+      font-size: 18px;
+      color: #26364d;
+    }
+    .diagram {
+      margin: 18px 0 24px;
+      padding: 18px;
+      overflow-x: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .layer {
+      margin: 16px 0;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .layer h3 { margin-top: 0; }
+    .layer.user { border-left: 5px solid var(--blue); }
+    .layer.orch { border-left: 5px solid var(--purple); }
+    .layer.agent { border-left: 5px solid var(--teal); }
+    .layer.event { border-left: 5px solid var(--amber); }
+    .layer.data { border-left: 5px solid var(--green); }
+    .card, .principle, .risk {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .card h3, .principle h3, .risk h3 { margin-top: 0; }
+    .principle { border-left: 5px solid var(--teal); }
+    .risk { border-left: 5px solid var(--red); background: #fff8f7; }
+    .tag {
+      display: inline-block;
+      margin: 0 6px 6px 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e8f3ff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .chips span {
+      display: inline-block;
+      margin: 4px 6px 4px 0;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+      font-size: 13px;
+    }
+    .node-matrix {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .matrix-node {
+      min-height: 132px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .matrix-node b { display: block; margin-bottom: 6px; }
+    .matrix-node.agent { border-top: 4px solid var(--teal); }
+    .matrix-node.advice { border-top: 4px solid var(--amber); }
+    .matrix-node.review { border-top: 4px solid var(--purple); }
+    .layer.knowledge { border-left: 5px solid var(--amber); }
+    footer {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      main { padding: 28px 18px 48px; }
+      h1 { font-size: 28px; }
+      .grid, .grid.three, .node-matrix { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>OTS-AHA v3 Agent 架构图</h1>
+    <p class="lead">
+      v3 架构保留“1 个编排 Agent + 3 个功能 Agent”的简洁骨架，
+      但把功能边界从技术模块调整为 <mark>接入、理解、问题识别、建议辅助、就绪判断</mark> 的业务节点。
+    </p>
+  </header>
+
+  <section>
+    <h2>1. 分层架构总图</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+  subgraph U[用户层]
+    PE[PE 工作台<br/>任务看板 / 人工复核]
+    Supplier[供应商资料入口<br/>MVP 后续扩展]
+    Signer[会签人员<br/>查看认可依据]
+  end
+
+  subgraph O[编排层]
+    Orch[Orchestrator Agent<br/>状态机 / 事件路由 / 人审节点]
+    State[状态机<br/>CREATED / COLLECTING / ORGANIZING / REVIEW / SIGNING / CLOSED]
+    Review[Human Review Workbench<br/>ReviewItem 闭环]
+  end
+
+  subgraph A[Agent 层]
+    Intake[Intake Agent<br/>资料接入]
+    Doc[Document Understanding Agent<br/>文档理解 + 问题识别]
+    Ready[Approval Readiness Agent<br/>认可就绪判断 + PE建议]
+  end
+
+  subgraph K[参考能力层]
+    Rules[业务规则库<br/>清单 / 阈值 / 阻塞规则]
+    RAG[RAG 历史案例<br/>相似案例 / 处置参考]
+    Advice[建议生成器<br/>PERecommendation]
+  end
+
+  subgraph E[事件层]
+    Bus[Event Bus<br/>MVP: asyncio.Queue]
+    Log[EventLog / AuditLog<br/>全链路追踪]
+    Notify[通知队列<br/>邮件 / IM / 工作台提醒]
+  end
+
+  subgraph D[数据层]
+    Task[(ApprovalTask)]
+    Source[(SourceDocument)]
+    Evidence[(DocumentEvidence)]
+    Issue[(DocumentIssue)]
+    Recommendation[(PERecommendation)]
+    CaseRef[(HistoricalCaseRef)]
+    Checklist[(ChecklistTemplate)]
+    ReviewItem[(ReviewItem)]
+  end
+
+  PE --> Orch
+  Supplier -.未来.-> Intake
+  Signer --> PE
+
+  Orch --> State
+  Orch --> Review
+  Review --> Orch
+
+  Intake --> Bus
+  Doc --> Bus
+  Ready --> Bus
+  Rules --> Ready
+  RAG --> Ready
+  Ready --> Advice
+  Bus --> Orch
+  Orch --> Notify
+  Bus --> Log
+
+  Intake --> Source
+  Doc --> Evidence
+  Doc --> Issue
+  RAG --> CaseRef
+  Advice --> Recommendation
+  Ready --> Checklist
+  Orch --> Task
+  Review --> ReviewItem
+
+  Source --> Doc
+  Evidence --> Ready
+  Issue --> Ready
+  CaseRef -.参考, 非审批依据.-> Ready
+  Checklist --> Ready
+  Ready --> Orch
+
+  classDef user fill:#eef5ff,stroke:#2457a6,color:#172033;
+  classDef orch fill:#f4f0ff,stroke:#6f42c1,color:#172033;
+  classDef agent fill:#f0fbf9,stroke:#087f7a,color:#172033;
+  classDef know fill:#fff8e8,stroke:#a86400,color:#172033;
+  classDef event fill:#fff8e8,stroke:#a86400,color:#172033;
+  classDef data fill:#effaf3,stroke:#18794e,color:#172033;
+
+  class PE,Supplier,Signer user;
+  class Orch,State,Review orch;
+  class Intake,Doc,Ready agent;
+  class Rules,RAG,Advice know;
+  class Bus,Log,Notify event;
+  class Task,Source,Evidence,Issue,Recommendation,CaseRef,Checklist,ReviewItem data;
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 各层职责</h2>
+    <article class="layer user">
+      <h3>用户层</h3>
+      <p>PE 工作台是 MVP 的主入口，负责任务查看、人工复核、资料补充判断和状态确认。供应商资料入口和会签人员视图作为后续扩展。</p>
+      <div class="chips">
+        <span>PE 工作台</span><span>任务看板</span><span>人工复核</span><span>会签视图</span>
+      </div>
+    </article>
+    <article class="layer orch">
+      <h3>编排层</h3>
+      <p>Orchestrator Agent 负责确定性流程决策。它消费事件、读写任务状态、创建 ReviewItem、触发通知。</p>
+      <p><mark>关键原则：</mark>编排 Agent 不调用 LLM，不解析文件，不生成业务证据。</p>
+    </article>
+    <article class="layer agent">
+      <h3>Agent 层</h3>
+      <p>功能 Agent 分别对应资料接入、文档理解、认可就绪判断。文档理解 Agent 可识别测试问题，但完整建议由认可就绪度 Agent 结合任务上下文生成。</p>
+      <div class="chips">
+        <span>Intake Agent</span><span>Document Understanding Agent</span><span>Approval Readiness Agent</span>
+      </div>
+    </article>
+    <article class="layer knowledge">
+      <h3>参考能力层</h3>
+      <p>规则库、历史案例 RAG、建议生成器为认可就绪度判断提供依据。它们是参考能力，不是独立审批 Agent。</p>
+      <div class="chips">
+        <span>业务规则库</span><span>HistoricalCaseRef</span><span>PERecommendation</span>
+      </div>
+    </article>
+    <article class="layer event">
+      <h3>事件层</h3>
+      <p>MVP 使用进程内事件总线，保留升级到 RabbitMQ 的路径。所有关键事件进入 EventLog / AuditLog，保证链路可追溯。</p>
+    </article>
+    <article class="layer data">
+      <h3>数据层</h3>
+      <p>数据模型围绕任务、资料、证据、问题、建议、清单、确认项展开。它们是后续工程实现和评测的统一语言。</p>
+    </article>
+  </section>
+
+  <section>
+    <h2>3. 核心原则卡片</h2>
+    <div class="grid">
+      <article class="principle">
+        <h3>编排 Agent 不调用 LLM</h3>
+        <p>流程推进必须可解释、可复现、可审计。LLM 可以提供证据和建议，但不能决定任务状态。</p>
+      </article>
+      <article class="principle">
+        <h3>功能 Agent 不直接改状态</h3>
+        <p>Intake、Document Understanding、Approval Readiness 都只发布事件和结构化输出。</p>
+      </article>
+      <article class="principle">
+        <h3>LLM 输出证据，不输出审批决定</h3>
+        <p>LLM 的产品位置是“理解、问题识别与辅助建议”，不是替代 PE、质量、会签人员作最终决定。</p>
+      </article>
+      <article class="principle">
+        <h3>RAG 只能作为参考依据</h3>
+        <p>历史案例必须带来源、相似点、差异点和适用条件，不能被当成自动审批依据。</p>
+      </article>
+      <article class="principle">
+        <h3>人工复核工作台是核心闭环</h3>
+        <p>低置信和冲突不是系统失败，而是 L3 Agent 产品必须承接的正常工作流。</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 节点化能力矩阵</h2>
+    <div class="node-matrix">
+      <div class="matrix-node agent">
+        <b>Intake</b>
+        识别资料来源、过滤无关文件、关联任务、保留误拦恢复入口。
+      </div>
+      <div class="matrix-node agent">
+        <b>Understanding</b>
+        形成 <code>DocumentEvidence</code>，并识别 <code>DocumentIssue</code>。
+      </div>
+      <div class="matrix-node advice">
+        <b>Advisory</b>
+        基于规则与 <code>HistoricalCaseRef</code> 形成 <code>PERecommendation</code>。
+      </div>
+      <div class="matrix-node review">
+        <b>Review</b>
+        PE 对低置信、冲突、建议动作进行采纳、修正或驳回。
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Agent 输入输出边界</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>输入</th>
+          <th>输出</th>
+          <th>不负责</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Intake Agent</td>
+          <td>邮件、附件、上传文件、Webhook payload</td>
+          <td><code>SourceDocument</code>、接入分类、拒收/待审原因</td>
+          <td>不解析报告正文，不判断认可是否通过。</td>
+        </tr>
+        <tr>
+          <td>Document Understanding Agent</td>
+          <td><code>SourceDocument</code>、任务上下文、文档内容</td>
+          <td><code>DocumentEvidence</code>、<code>DocumentIssue</code>、文档类型、字段、置信度、低置信提示</td>
+          <td>不推进任务状态，不直接发补充资料通知，不独自生成完整处置建议。</td>
+        </tr>
+        <tr>
+          <td>Approval Readiness Agent</td>
+          <td><code>ApprovalTask</code>、清单模板、全部证据、问题、规则和历史案例参考</td>
+          <td><code>ReadinessDecision</code>、缺失项、冲突项、<code>PERecommendation</code></td>
+          <td>不做最终审批，不替 PE 确认争议项。</td>
+        </tr>
+        <tr>
+          <td>Orchestrator Agent</td>
+          <td>事件、当前任务状态、人工确认结果</td>
+          <td>状态变更、ReviewItem、通知触发、补充请求</td>
+          <td>不调用 LLM，不执行文档理解。</td>
+        </tr>
+        <tr>
+          <td>Human Review Workbench</td>
+          <td><code>ReviewItem</code>、证据、问题、建议、历史案例参考、上下文</td>
+          <td>人工确认、修正、驳回、补充要求</td>
+          <td>不是自动 Agent，不做黑盒决策。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. MVP 与后续版本边界</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">MVP</span>
+        <h3>当前必须落地的能力</h3>
+        <ul>
+          <li>统一资料接入和误拦恢复。</li>
+          <li>文档证据化、问题识别和核心字段置信度。</li>
+          <li>任务级认可就绪判断。</li>
+          <li>轻量 PE 建议：规则优先，历史案例作为可选参考。</li>
+          <li>ReviewItem 人工复核闭环。</li>
+          <li>事件日志和审计追踪。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">V1.5+</span>
+        <h3>后续扩展能力</h3>
+        <ul>
+          <li>Report Agent：认可报告草稿生成。</li>
+          <li>独立 RAG Agent：历史案例召回与深度风险推理。</li>
+          <li>供应商门户：供应商自助补充资料。</li>
+          <li>SFT：基于 PE 纠错样本做模型优化。</li>
+          <li>复杂返工根因分析与供应商绩效看板。</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. 架构风险提示</h2>
+    <div class="grid">
+      <article class="risk">
+        <h3>不要把 Agent 按技术工具命名</h3>
+        <p>Mail、Parser、Checker 容易把产品限制在技术实现上。Intake、Understanding、Readiness 更接近业务阶段。</p>
+      </article>
+      <article class="risk">
+        <h3>不要让 DataChecker 只检查字段</h3>
+        <p>OTS 认可真正关心的是任务是否就绪、问题是否阻塞、PE 下一步怎么处理，而不是某一份文档是否有几个字段。</p>
+      </article>
+      <article class="risk">
+        <h3>不要绕开人工工作台</h3>
+        <p>没有 ReviewItem 闭环，低置信和冲突只能散落在日志里，PE 无法稳定接管。</p>
+      </article>
+      <article class="risk">
+        <h3>不要提前拆更多 Agent</h3>
+        <p>MVP 不需要独立 Report Agent、RAG Agent、SFT Agent。RAG 可以作为建议参考能力，先把核心闭环打穿。</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    本架构图是 v3 产品设计视角，不要求当前工程代码立即完全对应；后续规格转让书应以此作为上游设计基线。
+  </footer>
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "base", securityLevel: "loose" });
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "case_id": "C02",
+  "report_type": "DV机械件-基准对照",
+  "expected": {
+    "part_no": "OTS-2025-088",
+    "software_version_F1C1": "非软件测试报告，无软件版本信息",
+    "software_version_F1C2": "非软件测试报告，无软件版本信息",
+    "software_version_vendor_MCU": "非软件测试报告，无软件版本信息",
+    "part_name": "后扭力梁总成",
+    "test_type": "DV",
+    "test_date": "2025-11-20",
+    "test_result": "PASS",
+    "lab_name": "中汽研汽车检验中心",
+    "standard": "GB/T 26780-2024",
+    "material": "SAPH440",
+    "material_spec": "GB/T 20887.1-2017",
+    "tensile_strength": "465 MPa",
+    "hardness": null,
+    "coating": null
+  },
+  "field_status": {
+    "part_no": "extracted",
+    "software_version_F1C1": "not_applicable",
+    "software_version_F1C2": "not_applicable",
+    "software_version_vendor_MCU": "not_applicable",
+    "part_name": "extracted",
+    "test_type": "extracted",
+    "test_date": "extracted",
+    "test_result": "extracted",
+    "lab_name": "extracted",
+    "standard": "extracted",
+    "material": "extracted",
+    "material_spec": "extracted",
+    "tensile_strength": "extracted",
+    "hardness": "missing",
+    "coating": "missing"
+  },
+  "confidence_range": {
+    "overall_confidence": {"min": 0.82, "max": 0.98}
+  },
+  "notes": "对照 C01，验证两次相同输入输出是否稳定一致"
+}

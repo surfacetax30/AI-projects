@@ -1,0 +1,43 @@
+{
+  "case_id": "C04",
+  "report_type": "软件测试报告-缺part_name",
+  "expected": {
+    "part_no": "26147117",
+    "software_version_F1C1": "E260S0690BA0140003",
+    "software_version_F1C2": "E260S0690BC0140021",
+    "software_version_vendor_MCU": "E260S_E260_202402021",
+    "part_name": "unknown",
+    "test_type": "软件",
+    "test_date": "2026-02-09",
+    "test_result": "PASS",
+    "lab_name": "博泰电子实验室",
+    "standard": "Q/SSR 3001-2024",
+    "material": null,
+    "material_spec": null,
+    "tensile_strength": null,
+    "hardness": null,
+    "coating": null
+  },
+  "field_status": {
+    "part_no": "extracted",
+    "software_version_F1C1": "extracted",
+    "software_version_F1C2": "extracted",
+    "software_version_vendor_MCU": "extracted",
+    "part_name": "missing",
+    "test_type": "extracted",
+    "test_date": "extracted",
+    "test_result": "extracted",
+    "lab_name": "extracted",
+    "standard": "extracted",
+    "material": "not_applicable",
+    "material_spec": "not_applicable",
+    "tensile_strength": "not_applicable",
+    "hardness": "not_applicable",
+    "coating": "not_applicable"
+  },
+  "confidence_range": {
+    "overall_confidence": {"min": 0.85, "max": 0.98},
+    "part_name": {"min": 0.00, "max": 0.35}
+  },
+  "notes": "对照 C03，重点验证 part_name 应判 missing（非 extracted），confidence ≤ 0.30"
+}

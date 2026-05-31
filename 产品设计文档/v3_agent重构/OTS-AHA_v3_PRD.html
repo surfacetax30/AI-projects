@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OTS-AHA v3 PRD - Agent 架构重构</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #d8dee8;
+      --page: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #2457a6;
+      --teal: #087f7a;
+      --amber: #a86400;
+      --red: #b42318;
+      --green: #18794e;
+      --mark: #fff2a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 64px;
+    }
+    header {
+      padding: 30px 0 24px;
+      border-bottom: 3px solid var(--blue);
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; }
+    h1 { font-size: 34px; letter-spacing: 0; }
+    h2 {
+      margin-top: 38px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 24px;
+    }
+    h3 { margin-top: 22px; font-size: 18px; }
+    p { margin: 10px 0; }
+    mark {
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: var(--mark);
+      color: #241a00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    th, td {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #edf3fb; color: #193b70; }
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef1f5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .meta div, .card, .principle, .risk, .scope-box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .meta b { display: block; color: var(--muted); font-size: 12px; }
+    .lead {
+      max-width: 900px;
+      margin-top: 18px;
+      font-size: 18px;
+      color: #26364d;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card h3, .principle h3, .risk h3 { margin-top: 0; }
+    .tag {
+      display: inline-block;
+      margin: 0 6px 6px 0;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e8f3ff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .principle { border-left: 5px solid var(--teal); }
+    .risk { border-left: 5px solid var(--red); background: #fff8f7; }
+    .scope-box { border-left: 5px solid var(--green); }
+    .out-box { border-left: 5px solid var(--amber); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .step {
+      min-height: 116px;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--blue);
+      border-radius: 8px;
+    }
+    .step b { display: block; margin-bottom: 6px; }
+    .object-list li, .check-list li { margin: 7px 0; }
+    .decision {
+      background: #f0fbf9;
+      border: 1px solid #b7e4df;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .node-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .node {
+      position: relative;
+      min-height: 142px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+    .node:before {
+      content: attr(data-index);
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #e8f3ff;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .node h3 { margin-top: 0; padding-right: 34px; }
+    .node.evidence { border-top: 4px solid var(--blue); }
+    .node.issue { border-top: 4px solid var(--red); }
+    .node.recommend { border-top: 4px solid var(--teal); }
+    .node.review { border-top: 4px solid var(--amber); }
+    footer {
+      margin-top: 48px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      .meta, .grid, .grid.three, .flow, .node-board { grid-template-columns: 1fr; }
+      main { padding: 28px 18px 48px; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>OTS-AHA v3 PRD：Agent 架构重构</h1>
+    <p class="lead">
+      本版本将产品重心从“自动解析测试报告”调整为
+      <mark>OTS 认可资料包智能处理助手</mark>：系统负责资料接入、文档证据化、
+      问题识别、认可就绪判断，并把带依据的建议交给 PE 完成人工确认。
+    </p>
+    <section class="meta" aria-label="文档元信息">
+      <div><b>项目</b>OTS Approval Helping Agent</div>
+      <div><b>版本</b>v3 Agent 架构重构</div>
+      <div><b>策略</b>新增版本，不覆盖旧文档</div>
+      <div><b>日期</b>2026-05-30</div>
+    </section>
+  </header>
+
+  <section>
+    <h2>1. 产品定位</h2>
+    <div class="decision">
+      <strong>一句话目标：</strong>
+      PE 每天处理 OTS 资料时，系统自动接入资料、理解文档内容、判断认可任务是否就绪，
+      识别测试文档中的问题，并基于规则与历史案例给出可追溯建议，最终由 PE 复核推进。
+    </div>
+    <p>
+      v3 的核心变化是从“单份报告解析工具”升级为“资料包级工作流助手”。
+      OTS 认可真实场景不是只判断一份测试报告，而是围绕一个零件任务处理多份文件、
+      多个来源、多种版本和多个确认节点。
+    </p>
+    <p>
+      因此，Agent 链路应围绕 <mark>资料进入 → 文档证据化 → 问题识别 → PE建议 → 人工确认/推进</mark>
+      设计，而不是围绕“邮件 → 解析 → 检查 → 报告”设计。
+    </p>
+  </section>
+
+  <section>
+    <h2>2. 用户与核心场景</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>角色</th>
+          <th>核心诉求</th>
+          <th>v3 产品承诺</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PE / 产品工程师</td>
+          <td>快速判断资料是否齐、是否可信、下一步该做什么。</td>
+          <td>集中呈现任务就绪度、低置信字段、缺失项、版本冲突和待确认事项。</td>
+        </tr>
+        <tr>
+          <td>测试工程师</td>
+          <td>提交测试报告后能被系统正确识别并关联任务。</td>
+          <td>通过 Intake Agent 统一接入，避免邮箱规则误拦后静默丢失。</td>
+        </tr>
+        <tr>
+          <td>供应商</td>
+          <td>知道缺什么、为什么缺、如何补。</td>
+          <td>MVP 先由 PE 工作台承接，后续再扩展供应商门户。</td>
+        </tr>
+        <tr>
+          <td>会签人员</td>
+          <td>看到清晰的认可依据和风险提示。</td>
+          <td>只在任务达到认可就绪后进入会签，不让原始杂乱资料直接流入会签。</td>
+        </tr>
+        <tr>
+          <td>质量经理</td>
+          <td>关注一次通过率、异常漏检、处理周期和人工介入率。</td>
+          <td>以任务、文档、证据、确认项为基础沉淀可审计数据。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. v3 核心业务链路</h2>
+    <div class="flow" aria-label="核心业务链路">
+      <div class="step">
+        <b>1. 资料进入</b>
+        邮件、手动上传、Webhook 进入统一入口，生成可追踪的原始资料记录。
+      </div>
+      <div class="step">
+        <b>2. 文档证据化</b>
+        对资料进行类型识别、文本提取、字段提取、置信度标注，形成证据。
+      </div>
+      <div class="step">
+        <b>3. 问题识别</b>
+        从测试文档中识别 FAIL、BORDERLINE、版本不一致、标准缺失、数值异常。
+      </div>
+      <div class="step">
+        <b>4. 建议生成</b>
+        基于证据、规则、历史案例，生成 PE 可采纳或驳回的处理建议。
+      </div>
+      <div class="step">
+        <b>5. 人工确认</b>
+        低置信、冲突、建议动作、误拦恢复进入工作台，PE 复核后回写结果。
+      </div>
+      <div class="step">
+        <b>6. 任务推进</b>
+        编排 Agent 根据状态机和事件表推进任务或触发补充资料。
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 三层输出模型</h2>
+    <p>
+      文档理解 Agent 不再只输出字段。它先把文件转成证据和问题；
+      认可就绪度 Agent 再把问题放回任务上下文，结合规则和历史案例形成建议。
+    </p>
+    <div class="node-board">
+      <article class="node evidence" data-index="1">
+        <h3>Evidence / 证据</h3>
+        <p>报告原文、字段值、页码/表格位置、置信度、适用的零件与测试类型。</p>
+      </article>
+      <article class="node issue" data-index="2">
+        <h3>Issue / 问题</h3>
+        <p>FAIL、BORDERLINE、版本冲突、测试标准缺失、数值异常、报告日期异常。</p>
+      </article>
+      <article class="node recommend" data-index="3">
+        <h3>Recommendation / 建议</h3>
+        <p>建议 PE 要求补资料、复测、整改说明、风险会签，或确认可进入下一步。</p>
+      </article>
+    </div>
+    <div class="risk">
+      <h3>建议能力边界</h3>
+      <p>
+        RAG 历史案例只作为建议依据和参考，不作为自动审批依据。
+        系统必须展示参考案例、相似原因、适用条件和置信度，最终动作由 PE 确认。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Agent 职责边界</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Host</span>
+        <h3>Orchestrator Agent / 编排 Agent</h3>
+        <p><strong>职责：</strong>状态机、路由决策、人工确认节点、事件消费、任务推进。</p>
+        <p><strong>输入：</strong>接入事件、证据事件、就绪度事件、人工确认事件。</p>
+        <p><strong>输出：</strong>任务状态变更、ReviewItem 创建、通知触发、补充资料请求。</p>
+        <p><mark>原则：</mark>不调用 LLM，不直接解析文件，只做确定性流程决策。</p>
+      </article>
+      <article class="card">
+        <span class="tag">入口</span>
+        <h3>Intake Agent / 资料接入 Agent</h3>
+        <p><strong>职责：</strong>承接邮件、上传、Webhook、未来供应商门户，完成过滤、去重、关联和入队。</p>
+        <p><strong>输入：</strong>邮件元数据、附件、上传文件、外部推送。</p>
+        <p><strong>输出：</strong><code>SourceDocument</code>、接入分类、待人工接入确认项。</p>
+        <p><mark>变化：</mark>从 MailGateway 升级为资料接入层，不再被邮箱形态限制。</p>
+      </article>
+      <article class="card">
+        <span class="tag">理解</span>
+        <h3>Document Understanding Agent / 文档理解 Agent</h3>
+        <p><strong>职责：</strong>文件解析、文档类型识别、字段提取、证据生成、测试问题识别、置信度评分。</p>
+        <p><strong>输入：</strong><code>SourceDocument</code> 与任务上下文。</p>
+        <p><strong>输出：</strong><code>DocumentEvidence</code>、<code>DocumentIssue</code>、低置信字段、疑似无关文件标记。</p>
+        <p><mark>原则：</mark>输出证据和问题，不独自生成完整处置建议，不输出最终审批结论。</p>
+      </article>
+      <article class="card">
+        <span class="tag">判断</span>
+        <h3>Approval Readiness Agent / 认可就绪度 Agent</h3>
+        <p><strong>职责：</strong>按任务维度检查资料包完整性、版本一致性、关键报告结论、阻塞项和 PE 建议。</p>
+        <p><strong>输入：</strong>任务上下文、清单模板、全部 <code>DocumentEvidence</code>、<code>DocumentIssue</code>、历史案例参考。</p>
+        <p><strong>输出：</strong><code>ReadinessDecision</code>、缺失项、冲突项、<code>PERecommendation</code>。</p>
+        <p><mark>变化：</mark>从字段完整性检查升级为认可就绪判断和 PE 辅助建议。</p>
+      </article>
+    </div>
+
+    <div class="principle">
+      <h3>Human Review Workbench / 人工复核工作台</h3>
+      <p>
+        Human Review Workbench <mark>不是 Agent，但必须是一等产品模块</mark>。
+        它承接所有低置信、冲突、误拦恢复、缺失确认、版本选择、资料补充判断和建议采纳。
+        没有这个闭环，系统只能做自动化 demo，不能成为 PE 可依赖的工作台。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. MVP 范围</h2>
+    <div class="grid">
+      <div class="scope-box">
+        <h3>MVP 必须做</h3>
+        <ul class="check-list">
+          <li>统一资料接入：邮件、上传、Webhook 进入同一接入层。</li>
+          <li>文档证据化：识别文档类型、提取核心字段、输出置信度。</li>
+          <li>问题识别：从测试文档中标记 FAIL、BORDERLINE、版本冲突、标准缺失。</li>
+          <li>轻量建议：基于规则给出 PE 建议动作，RAG 历史案例先作为可选参考。</li>
+          <li>人工复核闭环：所有不确定项和建议动作进入 ReviewItem，并支持 PE 确认。</li>
+          <li>可追溯记录：任务、文档、证据、确认项、状态变更可回溯。</li>
+        </ul>
+      </div>
+      <div class="scope-box out-box">
+        <h3>MVP 不做</h3>
+        <ul class="check-list">
+          <li>报告 Agent：自动生成认可报告草稿延后到 V1.5。</li>
+          <li>独立 RAG Agent：历史案例先作为建议辅助能力，不拆成 Agent。</li>
+          <li>SFT：等累计足够纠错样本后再启动。</li>
+          <li>供应商门户：MVP 由 PE 工作台承接补充资料动作。</li>
+          <li>复杂返工根因分析：先记录阻塞项，不做自动根因推理。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. 核心产品对象</h2>
+    <ul class="object-list">
+      <li><code>ApprovalTask</code>：一个零件 OTS 认可任务，是状态机和资料包的主对象。</li>
+      <li><code>SourceDocument</code>：进入系统的一份原始资料，保留来源、文件、接入判断和追踪信息。</li>
+      <li><code>DocumentEvidence</code>：文档理解后形成的结构化证据，包含字段、置信度、出处和适用范围。</li>
+      <li><code>DocumentIssue</code>：从测试文档和资料包中识别的问题，包含类型、严重度、证据引用、影响范围和置信度。</li>
+      <li><code>PERecommendation</code>：面向 PE 的建议动作，包含建议、理由、历史案例引用、风险等级和是否必须人工确认。</li>
+      <li><code>HistoricalCaseRef</code>：RAG 召回的历史案例引用，必须包含来源、相似点、差异点、适用条件和相似度。</li>
+      <li><code>ReviewItem</code>：需要 PE 人工确认的事项，例如低置信字段、版本冲突、资料误拦、缺失项确认。</li>
+      <li><code>ReadinessDecision</code>：认可就绪判断结果，典型取值包括 <code>ready_for_signing</code>、<code>need_supplement</code>、<code>need_human_review</code>、<code>blocked_by_conflict</code>。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>8. 成功指标</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>指标</th>
+          <th>MVP 目标</th>
+          <th>为什么重要</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>资料接入准确率</td>
+          <td>OTS 相关资料识别准确率 ≥ 90%，误拦可恢复率 100%</td>
+          <td>避免供应商报告被静默丢弃。</td>
+        </tr>
+        <tr>
+          <td>文档识别准确率</td>
+          <td>主流 OTS 文档类型识别准确率 ≥ 90%</td>
+          <td>后续证据提取和清单判断依赖文档类型。</td>
+        </tr>
+        <tr>
+          <td>核心字段提取准确率</td>
+          <td>真实报告核心字段 ≥ 90%</td>
+          <td>零件号、测试结论、版本号、日期等错误会造成业务风险。</td>
+        </tr>
+        <tr>
+          <td>认可就绪判断准确率</td>
+          <td>PE 抽检通过率 ≥ 85%</td>
+          <td>衡量系统是否真正理解“能不能进入下一步”。</td>
+        </tr>
+        <tr>
+          <td>测试问题识别召回率</td>
+          <td>真实报告中的关键 FAIL / BORDERLINE / 冲突问题召回率 ≥ 85%</td>
+          <td>漏掉问题比多提醒更危险，问题识别优先关注召回。</td>
+        </tr>
+        <tr>
+          <td>PE 建议采纳率</td>
+          <td>系统建议中 ≥ 60% 被 PE 采纳或小幅修改后采纳</td>
+          <td>衡量建议是否真的帮 PE 判断下一步，而不是生成漂亮废话。</td>
+        </tr>
+        <tr>
+          <td>人工复核命中率</td>
+          <td>进入 ReviewItem 的事项中 ≥ 70% 被 PE 认为值得复核</td>
+          <td>避免工作台变成噪音中心。</td>
+        </tr>
+        <tr>
+          <td>PE 节省时间</td>
+          <td>单任务资料初筛耗时降低 50% 以上</td>
+          <td>MVP 是否有用户价值的直接指标。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>9. 风险与约束</h2>
+    <div class="grid">
+      <div class="risk">
+        <h3>审批权风险</h3>
+        <p>LLM 不直接给出最终审批决定。它只能输出证据、置信度、冲突提示和建议。</p>
+      </div>
+      <div class="risk">
+        <h3>建议越权风险</h3>
+        <p>PERecommendation 必须呈现为“建议动作 + 依据 + 需确认”，不能呈现为“系统已决定”。</p>
+      </div>
+      <div class="risk">
+        <h3>低置信风险</h3>
+        <p>低置信字段、冲突资料、非标准报告必须进入人工复核，不允许静默放行。</p>
+      </div>
+      <div class="risk">
+        <h3>评测偏差风险</h3>
+        <p>真实报告评测优先于模拟 case。模拟 case 只能验证格式，不能证明业务可用。</p>
+      </div>
+      <div class="risk">
+        <h3>范围膨胀风险</h3>
+        <p>报告生成、独立 RAG Agent、SFT、供应商门户不能混入 MVP，否则核心闭环会被稀释。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>10. 验收场景</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>场景</th>
+          <th>预期结果</th>
+          <th>验收关注点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>收到一封带测试报告附件的 OTS 邮件</td>
+          <td>Intake 生成 SourceDocument，文档理解生成证据，就绪度判断更新任务。</td>
+          <td>邮件、附件、任务、证据是否能被串起来。</td>
+        </tr>
+        <tr>
+          <td>资料包缺少关键报告</td>
+          <td>ReadinessDecision 返回 need_supplement，并生成清晰缺失项。</td>
+          <td>PE 是否知道缺什么、向谁要、为什么要。</td>
+        </tr>
+        <tr>
+          <td>同一零件存在多个软件版本资料</td>
+          <td>生成 ReviewItem，要求 PE 选择有效版本或标记冲突。</td>
+          <td>版本冲突不能被系统静默覆盖。</td>
+        </tr>
+        <tr>
+          <td>测试报告中出现 FAIL 或 BORDERLINE</td>
+          <td>生成 DocumentIssue，并由 Approval Readiness 给出 PERecommendation。</td>
+          <td>建议必须说明理由、证据出处、历史案例参考和是否阻塞认可。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    本 HTML 为 v3 新增产品设计文档。旧版 PRD、规格转让书和 drawio 图纸保留，用于版本对照。
+  </footer>
+</main>
+</body>
+</html>

@@ -46,34 +46,36 @@ class TestTasksAPI:
 
     @pytest.mark.asyncio
     async def test_webhook_mail(self, client):
-        create_resp = await client.post("/api/parts", json={
-            "part_no": "OTS-2026-011",
-            "part_name": "后副车架",
-            "part_type": "金属支架",
-            "supplier": "YY精工",
-            "project_code": "P2026",
-        })
-        task_id = create_resp.json()["task"]["id"]
-
         response = await client.post("/api/webhooks/mail", json={
             "mail_from": "vendor1@example.com",
             "mail_subject": "OTS-2026-011 OTS认可测试报告",
             "part_no": "OTS-2026-011",
+            "mail_body_preview": "测试报告正文",
             "attachments": ["ots-reports/ots2026011/report.pdf"],
         })
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "accepted"
-        assert data["task_id"] == task_id
+        assert data["status"] == "queued"
+        assert "mail_id" in data
+        assert data["mail_from"] == "vendor1@example.com"
+        assert data["note"] == "邮件已入队，将在下一次批处理中分类"
 
     @pytest.mark.asyncio
-    async def test_webhook_mail_part_not_found(self, client):
+    async def test_webhook_mail_queue_and_batch(self, client):
+        """邮件进入队列后，batch-process 应正确处理。"""
         response = await client.post("/api/webhooks/mail", json={
             "mail_from": "vendor1@example.com",
-            "mail_subject": "OTS-XXXX OTS认可测试报告",
-            "part_no": "OTS-XXXX",
+            "mail_subject": "OTS-2026-050 认可测试报告",
+            "part_no": "OTS-2026-050",
+            "attachments": ["report.pdf"],
         })
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert response.json()["status"] == "queued"
+
+        batch_resp = await client.post("/api/mail/batch-process")
+        assert batch_resp.status_code == 200
+        batch_data = batch_resp.json()
+        assert batch_data["total"] >= 1
 
     @pytest.mark.asyncio
     async def test_report_upload(self, client):
